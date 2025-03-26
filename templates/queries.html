@@ -17,8 +17,10 @@
         <a href="/manufacturers">Производители</a> |
         <a href="/config">Конфигурации</a> |
         <a href="/performance">Тесты</a> |
+        <a href="/cooling_systems">Системы охлаждения</a> |
         <a href="/stats">Статистика</a> |
-        <a href="/queries">Запросы</a>
+        <a href="/queries">Запросы</a> |
+        <a href="/cooling_systems">Системы охлаждения</a>
     </nav>
 
     {% if errors %}
@@ -66,6 +68,7 @@
                 <th>Объем RAM</th><th>Сокет</th><th>Однопоточный балл</th><th>Многопоточный балл</th>
                 <th>Потребляемая мощность</th><th>Температура</th><th>Длительность теста</th>
                 <th>Информация о стенде</th><th>RAM</th><th>Хранилище</th><th>GPU</th><th>Система охлаждения</th>
+                <th>Название кулера</th><th>Тип кулера</th><th>Макс. TDP кулера</th>
             </tr>
             {% for result in results %}
             <tr>
@@ -79,11 +82,14 @@
                 <td>{{ result['temperature'] }}</td><td>{{ result['test_duration'] }}</td>
                 <td>{{ result['test_stand_info'] }}</td><td>{{ result['ram_used'] }}</td>
                 <td>{{ result['storage_used'] }}</td><td>{{ result['gpu_used'] }}</td><td>{{ result['cooling_system'] }}</td>
+                <td>{{ result['cooler_name'] or 'Не указано' }}</td><td>{{ result['cooler_type'] or 'Не указано' }}</td>
+                <td>{{ result['max_tdp'] or 'Не указано' }}</td>
             </tr>
             {% endfor %}
         </table>
     {% endif %}
 
+    <!-- Существующий JavaScript код остается без изменений -->
     <script>
         const attributeSelect1 = document.getElementById('attribute1');
         const inputContainer1 = document.getElementById('input_container1');

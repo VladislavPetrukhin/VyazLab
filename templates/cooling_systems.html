@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Системы охлаждения</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h1>Системы охлаждения</h1>
+    <nav>
+        <a href="/">Главная</a> |
+        <a href="/search">Поиск</a> |
+        <a href="/view">Просмотр</a> |
+        <a href="/add">Добавить процессор</a> |
+        <a href="/add_detailed">Добавить (подробно)</a> |
+        <a href="/manufacturers">Производители</a> |
+        <a href="/config">Конфигурации</a> |
+        <a href="/performance">Тесты</a> |
+        <a href="/cooling_systems">Системы охлаждения</a> |
+        <a href="/stats">Статистика</a> |
+        <a href="/queries">Запросы</a> |
+    </nav>
+
+    {% if errors %}
+        <ul class="errors">
+            {% for error in errors %}
+                <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <h2>Добавить систему охлаждения</h2>
+    <form method="POST">
+        <label for="cooler_name">Название кулера:</label><br>
+        <input type="text" name="cooler_name" id="cooler_name" required><br>
+        <label for="cooler_type">Тип кулера:</label><br>
+        <input type="text" name="cooler_type" id="cooler_type" required><br>
+        <label for="max_tdp">Макс. TDP (Вт):</label><br>
+        <input type="number" name="max_tdp" id="max_tdp" min="50" max="500" required><br>
+        <button type="submit">Добавить</button>
+    </form>
+
+    <h2>Список систем охлаждения</h2>
+    <table>
+        <tr>
+            <th>ID</th>
+            <th>Название</th>
+            <th>Тип</th>
+            <th>Макс. TDP</th>
+            <th>Действия</th>
+        </tr>
+        {% for cs in cooling_systems %}
+        <tr>
+            <td>{{ cs['id'] }}</td>
+            <td>{{ cs['cooler_name'] }}</td>
+            <td>{{ cs['cooler_type'] }}</td>
+            <td>{{ cs['max_tdp'] }}</td>
+            <td><a href="{{ url_for('edit_cooling_system', id=cs['id']) }}">Редактировать</a></td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>

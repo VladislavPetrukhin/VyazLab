@@ -89,11 +89,13 @@ def view():
                    conf.motherboard_model, conf.ram_type, conf.ram_size, conf.socket_type,
                    pt.single_core_score, pt.multi_core_score, pt.power_consumption, 
                    pt.temperature, pt.test_duration, pt.test_stand_info, 
-                   pt.ram_used, pt.storage_used, pt.gpu_used, pt.cooling_system
+                   pt.ram_used, pt.storage_used, pt.gpu_used, pt.cooling_system,
+                   cs.cooler_name, cs.cooler_type, cs.max_tdp
             FROM processors p
             JOIN manufacturers m ON p.manufacturer_id = m.id
             LEFT JOIN config conf ON p.config_id = conf.id
             LEFT JOIN performance_tests pt ON p.performance_tests_id = pt.id
+            LEFT JOIN cooling_systems cs ON p.cooling_system_id = cs.id
             ORDER BY p.id
         """
         processors = cursor.execute(query).fetchall()
@@ -486,6 +488,7 @@ def stats():
 @app.route('/queries', methods=['GET', 'POST'])
 def queries():
     attributes = {
+        # Существующие атрибуты остаются без изменений
         'model_name': {'table': 'p', 'column': 'model_name', 'type': 'text', 'label': 'Название модели'},
         'release_year': {'table': 'p', 'column': 'release_year', 'type': 'number', 'label': 'Год выпуска'},
         'cores': {'table': 'p', 'column': 'cores', 'type': 'number', 'label': 'Количество ядер'},
@@ -510,7 +513,11 @@ def queries():
         'ram_used': {'table': 'pt', 'column': 'ram_used', 'type': 'text', 'label': 'Используемая RAM'},
         'storage_used': {'table': 'pt', 'column': 'storage_used', 'type': 'text', 'label': 'Используемое хранилище'},
         'gpu_used': {'table': 'pt', 'column': 'gpu_used', 'type': 'text', 'label': 'Используемый GPU'},
-        'cooling_system': {'table': 'pt', 'column': 'cooling_system', 'type': 'text', 'label': 'Система охлаждения'}
+        'cooling_system': {'table': 'pt', 'column': 'cooling_system', 'type': 'text', 'label': 'Система охлаждения'},
+        # Добавляем новые атрибуты для систем охлаждения
+        'cooler_name': {'table': 'cs', 'column': 'cooler_name', 'type': 'text', 'label': 'Название системы охлаждения'},
+        'cooler_type': {'table': 'cs', 'column': 'cooler_type', 'type': 'text', 'label': 'Тип системы охлаждения'},
+        'max_tdp': {'table': 'cs', 'column': 'max_tdp', 'type': 'number', 'label': 'Макс. TDP системы охлаждения'}
     }
     
     numeric_attributes = [key for key, attr in attributes.items() if attr['type'] in ['number', 'float']]
@@ -572,11 +579,13 @@ def queries():
                                conf.motherboard_model, conf.ram_type, conf.ram_size, conf.socket_type,
                                pt.single_core_score, pt.multi_core_score, pt.power_consumption, 
                                pt.temperature, pt.test_duration, pt.test_stand_info, 
-                               pt.ram_used, pt.storage_used, pt.gpu_used, pt.cooling_system
+                               pt.ram_used, pt.storage_used, pt.gpu_used, pt.cooling_system,
+                               cs.cooler_name, cs.cooler_type, cs.max_tdp
                         FROM processors p
                         JOIN manufacturers m ON p.manufacturer_id = m.id
                         LEFT JOIN config conf ON p.config_id = conf.id
                         LEFT JOIN performance_tests pt ON p.performance_tests_id = pt.id
+                        LEFT JOIN cooling_systems cs ON p.cooling_system_id = cs.id
                         WHERE {table1}.{column1} >= ? AND {table1}.{column1} <= ?
                     """.format(table1=table1, column1=column1)
                     params = [search_min1, search_max1]
@@ -706,6 +715,79 @@ def add_detailed():
                     errors.append("Ошибка: такой процессор уже существует")
 
     return render_template('add_detailed.html', errors=errors, companies=companies)
+
+# Системы охлаждения
+@app.route('/cooling_systems', methods=['GET', 'POST'])
+def cooling_systems():
+    errors = []
+    if request.method == 'POST':
+        data = {
+            'cooler_name': request.form['cooler_name'],
+            'cooler_type': request.form['cooler_type'],
+            'max_tdp': request.form['max_tdp']
+        }
+        # Валидация данных
+        if not all(data.values()):
+            errors.append("Все поля должны быть заполнены")
+        else:
+            try:
+                max_tdp = int(data['max_tdp'])
+                if not (50 <= max_tdp <= 500):
+                    errors.append("Макс. TDP должно быть от 50 до 500")
+            except ValueError:
+                errors.append("Макс. TDP должно быть числом")
+            if len(data['cooler_name']) < 3 or len(data['cooler_name']) > 100:
+                errors.append("Название кулера должно быть от 3 до 100 символов")
+            if len(data['cooler_type']) < 3 or len(data['cooler_type']) > 50:
+                errors.append("Тип кулера должен быть от 3 до 50 символов")
+            if not errors:
+                with get_db_connection() as conn:
+                    cursor = conn.cursor()
+                    cursor.execute("""
+                        INSERT INTO cooling_systems (cooler_name, cooler_type, max_tdp)
+                        VALUES (?, ?, ?)
+                    """, (data['cooler_name'], data['cooler_type'], max_tdp))
+                    conn.commit()
+    with get_db_connection() as conn:
+        cooling_systems = conn.execute("SELECT id, cooler_name, cooler_type, max_tdp FROM cooling_systems ORDER BY id").fetchall()
+    return render_template('cooling_systems.html', cooling_systems=cooling_systems, errors=errors)
+
+@app.route('/edit_cooling_system/<int:id>', methods=['GET', 'POST'])
+def edit_cooling_system(id):
+    errors = []
+    if request.method == 'POST':
+        data = {
+            'cooler_name': request.form['cooler_name'],
+            'cooler_type': request.form['cooler_type'],
+            'max_tdp': request.form['max_tdp']
+        }
+        # Валидация данных
+        if not all(data.values()):
+            errors.append("Все поля должны быть заполнены")
+        else:
+            try:
+                max_tdp = int(data['max_tdp'])
+                if not (50 <= max_tdp <= 500):
+                    errors.append("Макс. TDP должно быть от 50 до 500")
+            except ValueError:
+                errors.append("Макс. TDP должно быть числом")
+            if len(data['cooler_name']) < 3 or len(data['cooler_name']) > 100:
+                errors.append("Название кулера должно быть от 3 до 100 символов")
+            if len(data['cooler_type']) < 3 or len(data['cooler_type']) > 50:
+                errors.append("Тип кулера должен быть от 3 до 50 символов")
+            if not errors:
+                with get_db_connection() as conn:
+                    cursor = conn.cursor()
+                    cursor.execute("""
+                        UPDATE cooling_systems 
+                        SET cooler_name = ?, cooler_type = ?, max_tdp = ?
+                        WHERE id = ?
+                    """, (data['cooler_name'], data['cooler_type'], max_tdp, id))
+                    conn.commit()
+                return redirect(url_for('cooling_systems'))
+    with get_db_connection() as conn:
+        cooling_system = conn.execute("SELECT id, cooler_name, cooler_type, max_tdp FROM cooling_systems WHERE id = ?", (id,)).fetchone()
+    return render_template('edit_cooling_system.html', cooling_system=cooling_system, errors=errors)
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))

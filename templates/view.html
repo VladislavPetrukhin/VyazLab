@@ -17,8 +17,9 @@
         <a href="/manufacturers">Производители</a> |
         <a href="/config">Конфигурации</a> |
         <a href="/performance">Тесты</a> |
+        <a href="/cooling_systems">Системы охлаждения</a> |
         <a href="/stats">Статистика</a> |
-        <a href="/queries">Запросы</a>
+        <a href="/queries">Запросы</a> |
     </nav>
 
     <h2>Список процессоров</h2>
@@ -31,6 +32,7 @@
                 <th>Объем RAM</th><th>Сокет</th><th>Однопоточный балл</th><th>Многопоточный балл</th>
                 <th>Потребляемая мощность</th><th>Температура</th><th>Длительность теста</th>
                 <th>Информация о стенде</th><th>RAM</th><th>Хранилище</th><th>GPU</th><th>Система охлаждения</th>
+                <th>Название кулера</th><th>Тип кулера</th><th>Макс. TDP кулера</th>
             </tr>
             {% for processor in processors %}
             <tr>
@@ -60,6 +62,9 @@
                 <td>{{ processor['storage_used'] }}</td>
                 <td>{{ processor['gpu_used'] }}</td>
                 <td>{{ processor['cooling_system'] }}</td>
+                <td>{{ processor['cooler_name'] or 'Не указано' }}</td>
+                <td>{{ processor['cooler_type'] or 'Не указано' }}</td>
+                <td>{{ processor['max_tdp'] or 'Не указано' }}</td>
             </tr>
             {% endfor %}
         </table>
