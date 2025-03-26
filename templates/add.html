@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Добавить процессор (просто)</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+</head>
+<body>
+    <h1>Добавить процессор (просто)</h1>
+    <nav>
+        <a href="/">Главная</a> |
+        <a href="/search">Поиск</a> |
+        <a href="/view">Просмотр</a> |
+        <a href="/add">Добавить (просто)</a> |
+        <a href="/add_detailed">Добавить (подробно)</a> |
+        <a href="/manufacturers">Производители</a> |
+        <a href="/characteristics">Характеристики</a> |
+        <a href="/config">Конфигурации</a> |
+        <a href="/performance">Тесты</a> |
+        <a href="/stats">Статистика</a> |
+        <a href="/queries">Запросы</a>
+    </nav>
+
+    {% if errors %}
+        <ul class="errors">
+            {% for error in errors %}
+                <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <h2>Добавление процессора</h2>
+    <form method="POST">
+        <label for="model_name">Название модели (5-100 символов):</label><br>
+        <input type="text" name="model_name" id="model_name" required><br>
+        <label for="release_year">Год выпуска (1970-2025):</label><br>
+        <input type="number" name="release_year" id="release_year" min="1970" max="2025" required><br>
+        <label for="manufacturer_id">Производитель:</label><br>
+        <select name="manufacturer_id" id="manufacturer_id" required>
+            <option value="">-- Выберите производителя --</option>
+            {% for m in manufacturers %}
+                <option value="{{ m['id'] }}">{{ m['company_name'] }}</option>
+            {% endfor %}
+        </select><br>
+        <label for="characteristics_id">Характеристики:</label><br>
+        <select name="characteristics_id" id="characteristics_id">
+            <option value="">-- Выберите характеристики --</option>
+            {% for c in characteristics %}
+                <option value="{{ c['id'] }}">Ядра: {{ c['cores'] }}, Потоки: {{ c['threads'] }}</option>
+            {% endfor %}
+        </select><br>
+        <label for="config_id">Конфигурация:</label><br>
+        <select name="config_id" id="config_id">
+            <option value="">-- Выберите конфигурацию --</option>
+            {% for conf in configs %}
+                <option value="{{ conf['id'] }}">{{ conf['motherboard_model'] }}</option>
+            {% endfor %}
+        </select><br>
+        <label for="performance_tests_id">Тесты производительности:</label><br>
+        <select name="performance_tests_id" id="performance_tests_id">
+            <option value="">-- Выберите тесты --</option>
+            {% for pt in performance_tests %}
+                <option value="{{ pt['id'] }}">Однопоток: {{ pt['single_core_score'] }}, Многопоток: {{ pt['multi_core_score'] }}</option>
+            {% endfor %}
+        </select><br>
+        <button type="submit">Добавить</button>
+    </form>
+
+    <h2>Список процессоров</h2>
+    {% if processors %}
+        <table>
+            <tr>
+                <th>ID</th>
+                <th>Название модели</th>
+                <th>Год выпуска</th>
+                <th>Производитель</th>
+                <th>Ядра</th>
+                <th>Потоки</th>
+                <th>Материнская плата</th>
+                <th>Однопоточный балл</th>
+                <th>Многопоточный балл</th>
+            </tr>
+            {% for processor in processors %}
+            <tr>
+                <td>{{ processor['id'] }}</td>
+                <td>{{ processor['model_name'] }}</td>
+                <td>{{ processor['release_year'] }}</td>
+                <td>{{ processor['manufacturer_name'] or 'Не указан' }}</td>
+                <td>{{ processor['cores'] or 'Нет' }}</td>
+                <td>{{ processor['threads'] or 'Нет' }}</td>
+                <td>{{ processor['motherboard_model'] or 'Нет' }}</td>
+                <td>{{ processor['single_core_score'] or 'Нет' }}</td>
+                <td>{{ processor['multi_core_score'] or 'Нет' }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p>Нет процессоров для отображения.</p>
+    {% endif %}
+</body>
+</html>

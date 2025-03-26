@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Редактировать процессор</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h1>Редактировать процессор</h1>
+    <nav>
+        <a href="/">Главная</a> |
+        <a href="/search">Поиск</a> |
+        <a href="/view">Просмотр</a> |
+        <a href="/add">Добавить процессор</a> |
+        <a href="/add_detailed">Добавить (подробно)</a> |
+        <a href="/manufacturers">Производители</a> | |
+	<a href="/characteristics">Характеристики</a>
+        <a href="/config">Конфигурации</a> |
+        <a href="/performance">Тесты</a> |
+        <a href="/stats">Статистика</a> |
+        <a href="/queries">Запросы</a>
+    </nav>
+    {% if errors %}
+        <ul class="errors">
+            {% for error in errors %}
+                <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+    <form method="POST">
+        <label>Название модели:</label><br>
+        <input type="text" name="model_name" value="{{ processor['model_name'] }}" required><br>
+        <label>Год выпуска:</label><br>
+        <input type="number" name="release_year" value="{{ processor['release_year'] }}" min="1970" max="2025" required><br>
+        <label>Производитель:</label><br>
+        <select name="manufacturer_id" required>
+            {% for manufacturer in manufacturers %}
+            <option value="{{ manufacturer['id'] }}" {% if manufacturer['id'] == processor['manufacturer_id'] %}selected{% endif %}>
+                {{ manufacturer['company_name'] }}
+            </option>
+            {% endfor %}
+        </select><br>
+        <label>Количество ядер:</label><br>
+        <input type="number" name="cores" value="{{ processor['cores'] }}" min="1" max="128" required><br>
+        <label>Количество потоков:</label><br>
+        <input type="number" name="threads" value="{{ processor['threads'] }}" min="1" max="256" required><br>
+        <label>Базовая частота (GHz):</label><br>
+        <input type="number" step="0.1" name="base_clock" value="{{ processor['base_clock'] }}" min="0.5" max="7.0" required><br>
+        <label>Максимальная частота (GHz):</label><br>
+        <input type="number" step="0.1" name="max_clock" value="{{ processor['max_clock'] }}" min="0.5" max="10.0" required><br>
+        <label>Тепловыделение (Вт):</label><br>
+        <input type="number" name="tdp" value="{{ processor['tdp'] }}" min="0" max="500" required><br>
+        <label>Конфигурация:</label><br>
+        <select name="config_id">
+            <option value="">Нет</option>
+            {% for config in configs %}
+            <option value="{{ config['id'] }}" {% if config['id'] == processor['config_id'] %}selected{% endif %}>
+                {{ config['motherboard_model'] }}
+            </option>
+            {% endfor %}
+        </select><br>
+        <label>Тест производительности:</label><br>
+        <select name="performance_tests_id">
+            <option value="">Нет</option>
+            {% for test in performance_tests %}
+            <option value="{{ test['id'] }}" {% if test['id'] == processor['performance_tests_id'] %}selected{% endif %}>
+                Тест #{{ test['id'] }}
+            </option>
+            {% endfor %}
+        </select><br>
+        <button type="submit">Сохранить</button>
+    </form>
+</body>
+</html>

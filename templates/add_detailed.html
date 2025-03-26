@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Добавить процессор (подробно)</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+</head>
+<body>
+    <h1>Добавить процессор (подробный режим)</h1>
+    <nav>
+        <a href="/">Главная</a> |
+        <a href="/search">Поиск</a> |
+        <a href="/view">Просмотр</a> |
+        <a href="/add">Добавить</a> |
+        <a href="/add_detailed">Добавить (подробно)</a> |
+        <a href="/manufacturers">Производители</a> |
+        <a href="/characteristics">Характеристики</a> |
+        <a href="/config">Конфигурации</a> |
+        <a href="/performance">Тесты</a> |
+        <a href="/stats">Статистика</a> |
+        <a href="/queries">Запросы</a>
+    </nav>
+
+    {% if errors %}
+        <ul class="errors">
+            {% for error in errors %}
+                <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <form method="POST">
+        <h2>Информация о процессоре</h2>
+        <label for="model_name">Название модели:</label><br>
+        <input type="text" name="model_name" id="model_name" required><br>
+        <label for="release_year">Год выпуска:</label><br>
+        <input type="number" name="release_year" id="release_year" required><br>
+        <label for="company_name">Производитель:</label><br>
+        <select name="company_name" id="company_name" required>
+            <option value="">-- Выберите производителя --</option>
+            {% for company in companies %}
+                <option value="{{ company }}">{{ company }}</option>
+            {% endfor %}
+        </select><br>
+
+        <h2>Характеристики</h2>
+        <label for="cores">Количество ядер:</label><br>
+        <input type="number" name="cores" id="cores"><br>
+        <label for="threads">Количество потоков:</label><br>
+        <input type="number" name="threads" id="threads"><br>
+        <label for="base_clock">Базовая частота (GHz):</label><br>
+        <input type="text" name="base_clock" id="base_clock"><br>
+        <label for="max_clock">Макс. частота (GHz):</label><br>
+        <input type="text" name="max_clock" id="max_clock"><br>
+        <label for="tdp">Тепловыделение (Вт):</label><br>
+        <input type="number" name="tdp" id="tdp"><br>
+
+        <h2>Конфигурация</h2>
+        <label for="motherboard_model">Модель материнской платы:</label><br>
+        <input type="text" name="motherboard_model" id="motherboard_model"><br>
+        <label for="ram_type">Тип RAM:</label><br>
+        <input type="text" name="ram_type" id="ram_type"><br>
+        <label for="ram_size">Объем RAM (ГБ):</label><br>
+        <input type="number" name="ram_size" id="ram_size"><br>
+        <label for="socket_type">Тип сокета:</label><br>
+        <input type="text" name="socket_type" id="socket_type"><br>
+
+        <h2>Тесты производительности</h2>
+        <label for="single_core_score">Однопоточный балл:</label><br>
+        <input type="number" name="single_core_score" id="single_core_score"><br>
+        <label for="multi_core_score">Многопоточный балл:</label><br>
+        <input type="number" name="multi_core_score" id="multi_core_score"><br>
+        <label for="power_consumption">Потребляемая мощность (Вт):</label><br>
+        <input type="number" name="power_consumption" id="power_consumption"><br>
+        <label for="temperature">Температура (°C):</label><br>
+        <input type="number" name="temperature" id="temperature"><br>
+        <label for="test_duration">Длительность теста (ч):</label><br>
+        <input type="text" name="test_duration" id="test_duration"><br>
+        <label for="test_stand_info">Информация о стенде:</label><br>
+        <input type="text" name="test_stand_info" id="test_stand_info"><br>
+        <label for="ram_used">Используемая RAM:</label><br>
+        <input type="text" name="ram_used" id="ram_used"><br>
+        <label for="storage_used">Используемое хранилище:</label><br>
+        <input type="text" name="storage_used" id="storage_used"><br>
+        <label for="gpu_used">Используемый GPU:</label><br>
+        <input type="text" name="gpu_used" id="gpu_used"><br>
+        <label for="cooling_system">Система охлаждения:</label><br>
+        <input type="text" name="cooling_system" id="cooling_system"><br>
+
+        <button type="submit">Добавить процессор</button>
+    </form>
+</body>
+</html>

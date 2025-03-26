@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Редактировать производителя</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+</head>
+<body>
+    <h1>Редактировать производителя</h1>
+    <nav>
+        <a href="/">Главная</a> |
+        <a href="/search">Поиск</a> |
+        <a href="/view">Просмотр</a> |
+        <a href="/add">Добавить</a> |
+        <a href="/add_detailed">Добавить (подробно)</a> |
+        <a href="/manufacturers">Производители</a> |
+        <a href="/characteristics">Характеристики</a> |
+        <a href="/config">Конфигурации</a> |
+        <a href="/performance">Тесты</a> |
+        <a href="/stats">Статистика</a> |
+        <a href="/queries">Запросы</a>
+    </nav>
+
+    {% if errors %}
+        <ul class="errors">
+            {% for error in errors %}
+                <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <h2>Редактирование производителя (ID: {{ manufacturer['id'] }})</h2>
+    <form method="POST">
+        <label for="company_name">Название компании (3-100 символов):</label><br>
+        <input type="text" name="company_name" id="company_name" value="{{ manufacturer['company_name'] }}" required><br>
+        <label for="country">Страна (3-50 символов):</label><br>
+        <input type="text" name="country" id="country" value="{{ manufacturer['country'] }}" required><br>
+        <label for="founded_year">Год основания (1900-2025):</label><br>
+        <input type="number" name="founded_year" id="founded_year" value="{{ manufacturer['founded_year'] }}" min="1900" max="2025" required><br>
+        <label for="employees">Сотрудники (1-1000000):</label><br>
+        <input type="number" name="employees" id="employees" value="{{ manufacturer['employees'] }}" min="1" max="1000000" required><br>
+        <button type="submit">Сохранить</button>
+    </form>
+</body>
+</html>

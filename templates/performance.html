@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Тесты производительности</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+</head>
+<body>
+    <h1>Тесты производительности</h1>
+    <nav>
+        <a href="/">Главная</a> |
+        <a href="/search">Поиск</a> |
+        <a href="/view">Просмотр</a> |
+        <a href="/add">Добавить</a> |
+        <a href="/add_detailed">Добавить (подробно)</a> |
+        <a href="/manufacturers">Производители</a> |
+        <a href="/characteristics">Характеристики</a> |
+        <a href="/config">Конфигурации</a> |
+        <a href="/performance">Тесты</a> |
+        <a href="/stats">Статистика</a> |
+        <a href="/queries">Запросы</a>
+    </nav>
+
+    {% if errors %}
+        <ul class="errors">
+            {% for error in errors %}
+                <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <h2>Добавить тест</h2>
+    <form method="POST">
+        <label for="processor_id">Процессор:</label><br>
+        <select name="processor_id" id="processor_id" required>
+            <option value="">-- Выберите процессор --</option>
+            {% for p in processors %}
+                <option value="{{ p['id'] }}">{{ p['model_name'] }}</option>
+            {% endfor %}
+        </select><br>
+        <label for="single_core_score">Однопоточный балл (0-10000):</label><br>
+        <input type="number" name="single_core_score" id="single_core_score" min="0" max="10000" required><br>
+        <label for="multi_core_score">Многопоточный балл (0-10000):</label><br>
+        <input type="number" name="multi_core_score" id="multi_core_score" min="0" max="10000" required><br>
+        <label for="power_consumption">Потребляемая мощность (1-1000 Вт):</label><br>
+        <input type="number" name="power_consumption" id="power_consumption" min="1" max="1000" required><br>
+        <label for="temperature">Температура (20-100 °C):</label><br>
+        <input type="number" name="temperature" id="temperature" min="20" max="100" required><br>
+        <label for="test_duration">Длительность теста (0.1-24 ч):</label><br>
+        <input type="number" step="0.1" name="test_duration" id="test_duration" min="0.1" max="24" required><br>
+        <label for="test_stand_info">Информация о стенде (10-200 символов):</label><br>
+        <input type="text" name="test_stand_info" id="test_stand_info" required><br>
+        <label for="ram_used">Используемая RAM (5-50 символов):</label><br>
+        <input type="text" name="ram_used" id="ram_used" required><br>
+        <label for="storage_used">Используемое хранилище (5-50 символов):</label><br>
+        <input type="text" name="storage_used" id="storage_used" required><br>
+        <label for="gpu_used">Используемый GPU (5-50 символов):</label><br>
+        <input type="text" name="gpu_used" id="gpu_used" required><br>
+        <label for="cooling_system">Система охлаждения (5-50 символов):</label><br>
+        <input type="text" name="cooling_system" id="cooling_system" required><br>
+        <button type="submit">Добавить</button>
+    </form>
+
+    <h2>Список тестов</h2>
+    {% if tests %}
+        <table>
+            <tr>
+                <th>ID</th>
+                <th>ID Процессора</th>
+                <th>Однопоточный балл</th>
+                <th>Многопоточный балл</th>
+                <th>Потребляемая мощность</th>
+                <th>Температура</th>
+                <th>Длительность теста</th>
+                <th>Информация о стенде</th>
+                <th>RAM</th>
+                <th>Хранилище</th>
+                <th>GPU</th>
+                <th>Система охлаждения</th>
+                <th>Действия</th>
+            </tr>
+            {% for test in tests %}
+            <tr>
+                <td>{{ test['id'] }}</td>
+                <td>{{ test['processor_id'] }}</td>
+                <td>{{ test['single_core_score'] }}</td>
+                <td>{{ test['multi_core_score'] }}</td>
+                <td>{{ test['power_consumption'] }}</td>
+                <td>{{ test['temperature'] }}</td>
+                <td>{{ test['test_duration'] }}</td>
+                <td>{{ test['test_stand_info'] }}</td>
+                <td>{{ test['ram_used'] }}</td>
+                <td>{{ test['storage_used'] }}</td>
+                <td>{{ test['gpu_used'] }}</td>
+                <td>{{ test['cooling_system'] }}</td>
+                <td><a href="{{ url_for('edit_performance', id=test['id']) }}">Редактировать</a></td>
+            </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p>Нет тестов для отображения.</p>
+    {% endif %}
+</body>
+</html>

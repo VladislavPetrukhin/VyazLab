@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Производители</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+</head>
+<body>
+    <h1>Производители</h1>
+    <nav>
+        <a href="/">Главная</a> |
+        <a href="/search">Поиск</a> |
+        <a href="/view">Просмотр</a> |
+        <a href="/add">Добавить</a> |
+        <a href="/add_detailed">Добавить (подробно)</a> |
+        <a href="/manufacturers">Производители</a> |
+        <a href="/characteristics">Характеристики</a> |
+        <a href="/config">Конфигурации</a> |
+        <a href="/performance">Тесты</a> |
+        <a href="/stats">Статистика</a> |
+        <a href="/queries">Запросы</a>
+    </nav>
+
+    {% if errors %}
+        <ul class="errors">
+            {% for error in errors %}
+                <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <h2>Добавить производителя</h2>
+    <form method="POST">
+        <label for="company_name">Название компании (3-100 символов):</label><br>
+        <input type="text" name="company_name" id="company_name" required><br>
+        <label for="country">Страна (3-50 символов):</label><br>
+        <input type="text" name="country" id="country" required><br>
+        <label for="founded_year">Год основания (1900-2025):</label><br>
+        <input type="number" name="founded_year" id="founded_year" min="1900" max="2025" required><br>
+        <label for="employees">Сотрудники (1-1000000):</label><br>
+        <input type="number" name="employees" id="employees" min="1" max="1000000" required><br>
+        <button type="submit">Добавить</button>
+    </form>
+
+    <h2>Список производителей</h2>
+    {% if manufacturers %}
+        <table>
+            <tr>
+                <th>ID</th>
+                <th>Название компании</th>
+                <th>Страна</th>
+                <th>Год основания</th>
+                <th>Сотрудники</th>
+                <th>Действия</th>
+            </tr>
+            {% for m in manufacturers %}
+            <tr>
+                <td>{{ m['id'] }}</td>
+                <td>{{ m['company_name'] }}</td>
+                <td>{{ m['country'] }}</td>
+                <td>{{ m['founded_year'] }}</td>
+                <td>{{ m['employees'] }}</td>
+                <td><a href="{{ url_for('edit_manufacturer', id=m['id']) }}">Редактировать</a></td>
+            </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p>Нет производителей для отображения.</p>
+    {% endif %}
+</body>
+</html>

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Редактировать конфигурацию</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+</head>
+<body>
+    <h1>Редактировать конфигурацию</h1>
+    <nav>
+        <a href="/">Главная</a> |
+        <a href="/search">Поиск</a> |
+        <a href="/view">Просмотр</a> |
+        <a href="/add">Добавить</a> |
+        <a href="/add_detailed">Добавить (подробно)</a> |
+        <a href="/manufacturers">Производители</a> |
+        <a href="/characteristics">Характеристики</a> |
+        <a href="/config">Конфигурации</a> |
+        <a href="/performance">Тесты</a> |
+        <a href="/stats">Статистика</a> |
+        <a href="/queries">Запросы</a>
+    </nav>
+
+    {% if errors %}
+        <ul class="errors">
+            {% for error in errors %}
+                <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <h2>Редактирование конфигурации (ID: {{ config['id'] }})</h2>
+    <form method="POST">
+        <label for="processor_id">Процессор:</label><br>
+        <select name="processor_id" id="processor_id" required>
+            {% for p in processors %}
+                <option value="{{ p['id'] }}" {% if p['id'] == config['processor_id'] %}selected{% endif %}>{{ p['model_name'] }}</option>
+            {% endfor %}
+        </select><br>
+        <label for="motherboard_model">Материнская плата (5-100 символов):</label><br>
+        <input type="text" name="motherboard_model" id="motherboard_model" value="{{ config['motherboard_model'] }}" required><br>
+        <label for="ram_type">Тип RAM (5-20 символов):</label><br>
+        <input type="text" name="ram_type" id="ram_type" value="{{ config['ram_type'] }}" required><br>
+        <label for="ram_size">Объем RAM (1-4096 ГБ):</label><br>
+        <input type="number" name="ram_size" id="ram_size" value="{{ config['ram_size'] }}" min="1" max="4096" required><br>
+        <label for="socket_type">Тип сокета (5-20 символов):</label><br>
+        <input type="text" name="socket_type" id="socket_type" value="{{ config['socket_type'] }}" required><br>
+        <button type="submit">Сохранить</button>
+    </form>
+</body>
+</html>

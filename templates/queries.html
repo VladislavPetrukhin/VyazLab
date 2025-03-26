@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Запросы</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+</head>
+<body>
+    <h1>Запросы</h1>
+    <nav>
+        <a href="/">Главная</a> |
+        <a href="/search">Поиск</a> |
+        <a href="/view">Просмотр</a> |
+        <a href="/add">Добавить процессор</a> |
+        <a href="/add_detailed">Добавить (подробно)</a> |
+        <a href="/manufacturers">Производители</a> |
+        <a href="/characteristics">Характеристики</a> |
+        <a href="/config">Конфигурации</a> |
+        <a href="/performance">Тесты</a> |
+        <a href="/stats">Статистика</a> |
+        <a href="/queries">Запросы</a>
+    </nav>
+
+    {% if errors %}
+        <ul class="errors">
+            {% for error in errors %}
+                <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <h2>Поиск по атрибутам</h2>
+    <form method="POST">
+        <label for="attribute1">Выберите первый атрибут:</label><br>
+        <select name="attribute1" id="attribute1" required>
+            <option value="">-- Выберите атрибут --</option>
+            {% for key, attr in attributes.items() %}
+                <option value="{{ key }}" {% if key == selected_attribute1 %}selected{% endif %}>{{ attr.label }}</option>
+            {% endfor %}
+        </select><br>
+        <div id="input_container1">
+            <input type="text" name="search_min1" id="search_min1" value="{{ search_min1 or '' }}" required>
+        </div>
+
+        <label for="attribute2">Выберите второй атрибут (опционально):</label><br>
+        <select name="attribute2" id="attribute2">
+            <option value="">-- Выберите атрибут --</option>
+            {% for key, attr in attributes.items() %}
+                <option value="{{ key }}" {% if key == selected_attribute2 %}selected{% endif %}>{{ attr.label }}</option>
+            {% endfor %}
+        </select><br>
+        <div id="input_container2">
+            <input type="text" name="search_min2" id="search_min2" value="{{ search_min2 or '' }}">
+        </div>
+
+        <button type="submit">Найти</button>
+    </form>
+
+    {% if results %}
+        <h2>Результаты поиска</h2>
+        <table>
+            <tr>
+                <th>ID</th><th>Модель</th><th>Год выпуска</th><th>Производитель</th><th>Ядра</th><th>Потоки</th>
+                <th>Базовая частота</th><th>Макс. частота</th><th>Тепловыделение</th><th>Страна</th>
+                <th>Год основания</th><th>Сотрудники</th><th>Материнская плата</th><th>Тип RAM</th>
+                <th>Объем RAM</th><th>Сокет</th><th>Однопоточный балл</th><th>Многопоточный балл</th>
+                <th>Потребляемая мощность</th><th>Температура</th><th>Длительность теста</th>
+                <th>Информация о стенде</th><th>RAM</th><th>Хранилище</th><th>GPU</th><th>Система охлаждения</th>
+            </tr>
+            {% for result in results %}
+            <tr>
+                <td>{{ result['id'] }}</td><td>{{ result['model_name'] }}</td><td>{{ result['release_year'] }}</td>
+                <td>{{ result['company_name'] }}</td><td>{{ result['cores'] }}</td><td>{{ result['threads'] }}</td>
+                <td>{{ result['base_clock'] }}</td><td>{{ result['max_clock'] }}</td><td>{{ result['tdp'] }}</td>
+                <td>{{ result['country'] }}</td><td>{{ result['founded_year'] }}</td><td>{{ result['employees'] }}</td>
+                <td>{{ result['motherboard_model'] }}</td><td>{{ result['ram_type'] }}</td><td>{{ result['ram_size'] }}</td>
+                <td>{{ result['socket_type'] }}</td><td>{{ result['single_core_score'] }}</td>
+                <td>{{ result['multi_core_score'] }}</td><td>{{ result['power_consumption'] }}</td>
+                <td>{{ result['temperature'] }}</td><td>{{ result['test_duration'] }}</td>
+                <td>{{ result['test_stand_info'] }}</td><td>{{ result['ram_used'] }}</td>
+                <td>{{ result['storage_used'] }}</td><td>{{ result['gpu_used'] }}</td><td>{{ result['cooling_system'] }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    {% endif %}
+
+    <script>
+        const attributeSelect1 = document.getElementById('attribute1');
+        const inputContainer1 = document.getElementById('input_container1');
+        const attributeSelect2 = document.getElementById('attribute2');
+        const inputContainer2 = document.getElementById('input_container2');
+
+        const countries = {{ countries|tojson|safe }};
+        const companies = {{ companies|tojson|safe }};
+        const numericAttributes = {{ numeric_attributes|tojson|safe }};
+
+        function updateInputContainer(selectElement, containerElement, isFirst) {
+            const selectedValue = selectElement.value;
+            containerElement.innerHTML = '';
+
+            console.log(`Updating ${isFirst ? 'first' : 'second'} container: ${selectedValue}`);
+
+            if (!selectedValue) {
+                containerElement.innerHTML = `<input type="text" name="${isFirst ? 'search_min1' : 'search_min2'}" id="${isFirst ? 'search_min1' : 'search_min2'}" value="${isFirst ? '{{ search_min1 or '' }}' : '{{ search_min2 or '' }}'}" ${isFirst ? 'required' : ''}>`;
+            } else if (selectedValue === 'country') {
+                containerElement.innerHTML = `<select name="${isFirst ? 'search_min1' : 'search_min2'}" id="${isFirst ? 'search_min1' : 'search_min2'}" ${isFirst ? 'required' : ''}>` +
+                    '<option value="">-- Выберите страну --</option>' +
+                    countries.map(country => `<option value="${country}" ${country === (isFirst ? '{{ search_min1 }}' : '{{ search_min2 }}') ? 'selected' : ''}>${country}</option>`).join('') +
+                    '</select>';
+            } else if (selectedValue === 'company_name') {
+                containerElement.innerHTML = `<select name="${isFirst ? 'search_min1' : 'search_min2'}" id="${isFirst ? 'search_min1' : 'search_min2'}" ${isFirst ? 'required' : ''}>` +
+                    '<option value="">-- Выберите производителя --</option>' +
+                    companies.map(company => `<option value="${company}" ${company === (isFirst ? '{{ search_min1 }}' : '{{ search_min2 }}') ? 'selected' : ''}>${company}</option>`).join('') +
+                    '</select>';
+            } else if (numericAttributes.includes(selectedValue)) {
+                containerElement.innerHTML = `<label for="${isFirst ? 'search_min1' : 'search_min2'}">Минимальное значение:</label><br>` +
+                    `<input type="text" name="${isFirst ? 'search_min1' : 'search_min2'}" id="${isFirst ? 'search_min1' : 'search_min2'}" value="${isFirst ? '{{ search_min1 or '' }}' : '{{ search_min2 or '' }}'}" ${isFirst ? 'required' : ''}><br>` +
+                    `<label for="${isFirst ? 'search_max1' : 'search_max2'}">Максимальное значение (опционально):</label><br>` +
+                    `<input type="text" name="${isFirst ? 'search_max1' : 'search_max2'}" id="${isFirst ? 'search_max1' : 'search_max2'}" value="${isFirst ? '{{ search_max1 or '' }}' : '{{ search_max2 or '' }}'}">`;
+            } else {
+                containerElement.innerHTML = `<input type="text" name="${isFirst ? 'search_min1' : 'search_min2'}" id="${isFirst ? 'search_min1' : 'search_min2'}" value="${isFirst ? '{{ search_min1 or '' }}' : '{{ search_min2 or '' }}'}" ${isFirst ? 'required' : ''}>`;
+            }
+        }
+
+        attributeSelect1.addEventListener('change', function() {
+            updateInputContainer(this, inputContainer1, true);
+        });
+
+        attributeSelect2.addEventListener('change', function() {
+            updateInputContainer(this, inputContainer2, false);
+        });
+
+        window.addEventListener('load', function() {
+            console.log('Page loaded, initializing containers');
+            console.log('Countries:', countries);
+            console.log('Companies:', companies);
+            console.log('Numeric attributes:', numericAttributes);
+            updateInputContainer(attributeSelect1, inputContainer1, true);
+            updateInputContainer(attributeSelect2, inputContainer2, false);
+        });
+    </script>
+</body>
+</html>

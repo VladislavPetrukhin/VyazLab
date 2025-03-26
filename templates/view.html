@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Просмотр</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+</head>
+<body>
+    <h1>Просмотр</h1>
+    <nav>
+        <a href="/">Главная</a> |
+        <a href="/search">Поиск</a> |
+        <a href="/view">Просмотр</a> |
+        <a href="/add">Добавить</a> |
+        <a href="/add_detailed">Добавить (подробно)</a> |
+        <a href="/manufacturers">Производители</a> |
+        <a href="/characteristics">Характеристики</a> |
+        <a href="/config">Конфигурации</a> |
+        <a href="/performance">Тесты</a> |
+        <a href="/stats">Статистика</a> |
+        <a href="/queries">Запросы</a>
+    </nav>
+
+    <h2>Список процессоров</h2>
+    {% if processors %}
+        <table>
+            <tr>
+                <th>ID</th><th>Модель</th><th>Год выпуска</th><th>Производитель</th><th>Ядра</th><th>Потоки</th>
+                <th>Базовая частота</th><th>Макс. частота</th><th>Тепловыделение</th><th>Страна</th>
+                <th>Год основания</th><th>Сотрудники</th><th>Материнская плата</th><th>Тип RAM</th>
+                <th>Объем RAM</th><th>Сокет</th><th>Однопоточный балл</th><th>Многопоточный балл</th>
+                <th>Потребляемая мощность</th><th>Температура</th><th>Длительность теста</th>
+                <th>Информация о стенде</th><th>RAM</th><th>Хранилище</th><th>GPU</th><th>Система охлаждения</th>
+            </tr>
+            {% for processor in processors %}
+            <tr>
+                <td>{{ processor['id'] }}</td>
+                <td>{{ processor['model_name'] }}</td>
+                <td>{{ processor['release_year'] }}</td>
+                <td>{{ processor['company_name'] }}</td>
+                <td>{{ processor['cores'] }}</td>
+                <td>{{ processor['threads'] }}</td>
+                <td>{{ processor['base_clock'] }}</td>
+                <td>{{ processor['max_clock'] }}</td>
+                <td>{{ processor['tdp'] }}</td>
+                <td>{{ processor['country'] }}</td>
+                <td>{{ processor['founded_year'] }}</td>
+                <td>{{ processor['employees'] }}</td>
+                <td>{{ processor['motherboard_model'] }}</td>
+                <td>{{ processor['ram_type'] }}</td>
+                <td>{{ processor['ram_size'] }}</td>
+                <td>{{ processor['socket_type'] }}</td>
+                <td>{{ processor['single_core_score'] }}</td>
+                <td>{{ processor['multi_core_score'] }}</td>
+                <td>{{ processor['power_consumption'] }}</td>
+                <td>{{ processor['temperature'] }}</td>
+                <td>{{ processor['test_duration'] }}</td>
+                <td>{{ processor['test_stand_info'] }}</td>
+                <td>{{ processor['ram_used'] }}</td>
+                <td>{{ processor['storage_used'] }}</td>
+                <td>{{ processor['gpu_used'] }}</td>
+                <td>{{ processor['cooling_system'] }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p>Нет процессоров для отображения.</p>
+    {% endif %}
+</body>
+</html>

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Конфигурации</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+</head>
+<body>
+    <h1>Конфигурации</h1>
+    <nav>
+        <a href="/">Главная</a> |
+        <a href="/search">Поиск</a> |
+        <a href="/view">Просмотр</a> |
+        <a href="/add">Добавить</a> |
+        <a href="/add_detailed">Добавить (подробно)</a> |
+        <a href="/manufacturers">Производители</a> |
+        <a href="/characteristics">Характеристики</a> |
+        <a href="/config">Конфигурации</a> |
+        <a href="/performance">Тесты</a> |
+        <a href="/stats">Статистика</a> |
+        <a href="/queries">Запросы</a>
+    </nav>
+
+    {% if errors %}
+        <ul class="errors">
+            {% for error in errors %}
+                <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <h2>Добавить конфигурацию</h2>
+    <form method="POST">
+        <label for="processor_id">Процессор:</label><br>
+        <select name="processor_id" id="processor_id" required>
+            <option value="">-- Выберите процессор --</option>
+            {% for p in processors %}
+                <option value="{{ p['id'] }}">{{ p['model_name'] }}</option>
+            {% endfor %}
+        </select><br>
+        <label for="motherboard_model">Материнская плата (5-100 символов):</label><br>
+        <input type="text" name="motherboard_model" id="motherboard_model" required><br>
+        <label for="ram_type">Тип RAM (5-20 символов):</label><br>
+        <input type="text" name="ram_type" id="ram_type" required><br>
+        <label for="ram_size">Объем RAM (1-4096 ГБ):</label><br>
+        <input type="number" name="ram_size" id="ram_size" min="1" max="4096" required><br>
+        <label for="socket_type">Тип сокета (5-20 символов):</label><br>
+        <input type="text" name="socket_type" id="socket_type" required><br>
+        <button type="submit">Добавить</button>
+    </form>
+
+    <h2>Список конфигураций</h2>
+    {% if configs %}
+        <table>
+            <tr>
+                <th>ID</th>
+                <th>ID Процессора</th>
+                <th>Материнская плата</th>
+                <th>Тип RAM</th>
+                <th>Объем RAM</th>
+                <th>Тип сокета</th>
+                <th>Действия</th>
+            </tr>
+            {% for conf in configs %}
+            <tr>
+                <td>{{ conf['id'] }}</td>
+                <td>{{ conf['processor_id'] }}</td>
+                <td>{{ conf['motherboard_model'] }}</td>
+                <td>{{ conf['ram_type'] }}</td>
+                <td>{{ conf['ram_size'] }}</td>
+                <td>{{ conf['socket_type'] }}</td>
+                <td><a href="{{ url_for('edit_config', id=conf['id']) }}">Редактировать</a></td>
+            </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p>Нет конфигураций для отображения.</p>
+    {% endif %}
+</body>
+</html>
