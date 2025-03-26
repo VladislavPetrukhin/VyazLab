@@ -15,7 +15,6 @@
         <a href="/add">Добавить (просто)</a> |
         <a href="/add_detailed">Добавить (подробно)</a> |
         <a href="/manufacturers">Производители</a> |
-        <a href="/characteristics">Характеристики</a> |
         <a href="/config">Конфигурации</a> |
         <a href="/performance">Тесты</a> |
         <a href="/stats">Статистика</a> |
@@ -43,13 +42,16 @@
                 <option value="{{ m['id'] }}">{{ m['company_name'] }}</option>
             {% endfor %}
         </select><br>
-        <label for="characteristics_id">Характеристики:</label><br>
-        <select name="characteristics_id" id="characteristics_id">
-            <option value="">-- Выберите характеристики --</option>
-            {% for c in characteristics %}
-                <option value="{{ c['id'] }}">Ядра: {{ c['cores'] }}, Потоки: {{ c['threads'] }}</option>
-            {% endfor %}
-        </select><br>
+        <label for="cores">Количество ядер:</label><br>
+        <input type="number" name="cores" id="cores"><br>
+        <label for="threads">Количество потоков:</label><br>
+        <input type="number" name="threads" id="threads"><br>
+        <label for="base_clock">Базовая частота (GHz):</label><br>
+        <input type="text" name="base_clock" id="base_clock"><br>
+        <label for="max_clock">Макс. частота (GHz):</label><br>
+        <input type="text" name="max_clock" id="max_clock"><br>
+        <label for="tdp">Тепловыделение (Вт):</label><br>
+        <input type="number" name="tdp" id="tdp"><br>
         <label for="config_id">Конфигурация:</label><br>
         <select name="config_id" id="config_id">
             <option value="">-- Выберите конфигурацию --</option>

@@ -16,9 +16,7 @@ def get_db_connection():
 VALIDATION_RULES = {
     'processors': {
         'model_name': {'min_length': 3, 'max_length': 100},  # 3-100 символов
-        'release_year': {'min': 1970, 'max': 2025}
-    },
-    'characteristics': {
+        'release_year': {'min': 1970, 'max': 2025},
         'cores': {'min': 1, 'max': 128},
         'threads': {'min': 1, 'max': 256},
         'base_clock': {'min': 0.5, 'max': 7.0},
@@ -43,7 +41,7 @@ VALIDATION_RULES = {
         'power_consumption': {'min': 1, 'max': 1000},
         'temperature': {'min': 20, 'max': 100},
         'test_duration': {'min': 0.1, 'max': 24},
-        'test_stand_info': {'min_length': 10, 'max_length': 200},
+        'test_stand_info': {'min_length': 5, 'max_length': 200},
         'ram_used': {'min_length': 3, 'max_length': 50},
         'storage_used': {'min_length': 3, 'max_length': 50},
         'gpu_used': {'min_length': 3, 'max_length': 50},
@@ -86,7 +84,7 @@ def view():
         cursor = conn.cursor()
         query = """
             SELECT p.id, p.model_name, p.release_year, m.company_name, 
-                   c.cores, c.threads, c.base_clock, c.max_clock, c.tdp,
+                   p.cores, p.threads, p.base_clock, p.max_clock, p.tdp,
                    m.country, m.founded_year, m.employees,
                    conf.motherboard_model, conf.ram_type, conf.ram_size, conf.socket_type,
                    pt.single_core_score, pt.multi_core_score, pt.power_consumption, 
@@ -94,7 +92,6 @@ def view():
                    pt.ram_used, pt.storage_used, pt.gpu_used, pt.cooling_system
             FROM processors p
             JOIN manufacturers m ON p.manufacturer_id = m.id
-            JOIN characteristics c ON p.characteristics_id = c.id
             LEFT JOIN config conf ON p.config_id = conf.id
             LEFT JOIN performance_tests pt ON p.performance_tests_id = pt.id
             ORDER BY p.id
@@ -121,7 +118,7 @@ def search():
             cursor = conn.cursor()
             query = """
                 SELECT p.id, p.model_name, p.release_year, m.company_name, 
-                       c.cores, c.threads, c.base_clock, c.max_clock, c.tdp,
+                       p.cores, p.threads, p.base_clock, p.max_clock, p.tdp,
                        m.country, m.founded_year, m.employees,
                        conf.motherboard_model, conf.ram_type, conf.ram_size, conf.socket_type,
                        pt.single_core_score, pt.multi_core_score, pt.power_consumption, 
@@ -129,7 +126,6 @@ def search():
                        pt.ram_used, pt.storage_used, pt.gpu_used, pt.cooling_system
                 FROM processors p
                 JOIN manufacturers m ON p.manufacturer_id = m.id
-                JOIN characteristics c ON p.characteristics_id = c.id
                 LEFT JOIN config conf ON p.config_id = conf.id
                 LEFT JOIN performance_tests pt ON p.performance_tests_id = pt.id
                 WHERE 1=1
@@ -163,7 +159,6 @@ def add():
     # Получаем списки для выпадающих меню
     with get_db_connection() as conn:
         manufacturers = conn.execute("SELECT id, company_name FROM manufacturers ORDER BY company_name").fetchall()
-        characteristics = conn.execute("SELECT id, cores, threads FROM characteristics ORDER BY id").fetchall()
         configs = conn.execute("SELECT id, motherboard_model FROM config ORDER BY id").fetchall()
         performance_tests = conn.execute("SELECT id, single_core_score, multi_core_score FROM performance_tests ORDER BY id").fetchall()
 
@@ -171,10 +166,14 @@ def add():
         # Собираем данные для процессора
         processor_data = {
             'model_name': request.form.get('model_name', '').strip(),
-            'release_year': request.form.get('release_year', '').strip()
+            'release_year': request.form.get('release_year', '').strip(),
+            'cores': request.form.get('cores', ''),
+            'threads': request.form.get('threads', ''),
+            'base_clock': request.form.get('base_clock', ''),
+            'max_clock': request.form.get('max_clock', ''),
+            'tdp': request.form.get('tdp', '')
         }
         manufacturer_id = request.form.get('manufacturer_id')
-        characteristics_id = request.form.get('characteristics_id')
         config_id = request.form.get('config_id')
         performance_tests_id = request.form.get('performance_tests_id')
 
@@ -190,28 +189,31 @@ def add():
                 try:
                     release_year = int(processor_data['release_year'])
                     manufacturer_id = int(manufacturer_id)
-                    characteristics_id = int(characteristics_id) if characteristics_id else None
+                    cores = int(processor_data['cores']) if processor_data['cores'] else None
+                    threads = int(processor_data['threads']) if processor_data['threads'] else None
+                    base_clock = float(processor_data['base_clock']) if processor_data['base_clock'] else None
+                    max_clock = float(processor_data['max_clock']) if processor_data['max_clock'] else None
+                    tdp = int(processor_data['tdp']) if processor_data['tdp'] else None
                     config_id = int(config_id) if config_id else None
                     performance_tests_id = int(performance_tests_id) if performance_tests_id else None
 
                     with get_db_connection() as conn:
                         cursor = conn.cursor()
                         cursor.execute("""
-                            INSERT INTO processors (model_name, release_year, manufacturer_id, characteristics_id, config_id, performance_tests_id)
-                            VALUES (?, ?, ?, ?, ?, ?)
-                        """, (processor_data['model_name'], release_year, manufacturer_id, characteristics_id, config_id, performance_tests_id))
+                            INSERT INTO processors (model_name, release_year, manufacturer_id, cores, threads, base_clock, max_clock, tdp, config_id, performance_tests_id)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """, (processor_data['model_name'], release_year, manufacturer_id, cores, threads, base_clock, max_clock, tdp, config_id, performance_tests_id))
                         conn.commit()
                         
                         # Получаем обновлённый список процессоров с дополнительной информацией
                         processors = cursor.execute("""
                             SELECT p.id, p.model_name, p.release_year, 
                                    m.company_name AS manufacturer_name,
-                                   c.cores, c.threads,
+                                   p.cores, p.threads,
                                    conf.motherboard_model,
                                    pt.single_core_score, pt.multi_core_score
                             FROM processors p
                             LEFT JOIN manufacturers m ON p.manufacturer_id = m.id
-                            LEFT JOIN characteristics c ON p.characteristics_id = c.id
                             LEFT JOIN config conf ON p.config_id = conf.id
                             LEFT JOIN performance_tests pt ON p.performance_tests_id = pt.id
                             ORDER BY p.id
@@ -225,19 +227,18 @@ def add():
             processors = conn.execute("""
                 SELECT p.id, p.model_name, p.release_year, 
                        m.company_name AS manufacturer_name,
-                       c.cores, c.threads,
+                       p.cores, p.threads,
                        conf.motherboard_model,
                        pt.single_core_score, pt.multi_core_score
                 FROM processors p
                 LEFT JOIN manufacturers m ON p.manufacturer_id = m.id
-                LEFT JOIN characteristics c ON p.characteristics_id = c.id
                 LEFT JOIN config conf ON p.config_id = conf.id
                 LEFT JOIN performance_tests pt ON p.performance_tests_id = pt.id
                 ORDER BY p.id
             """).fetchall()
 
     return render_template('add.html', errors=errors, processors=processors, manufacturers=manufacturers, 
-                          characteristics=characteristics, configs=configs, performance_tests=performance_tests)
+                          configs=configs, performance_tests=performance_tests)
 
 # Редактирование процессора
 @app.route('/edit/<int:id>', methods=['GET', 'POST'])
@@ -247,41 +248,31 @@ def edit(id):
         processor_data = {
             'model_name': request.form['model_name'],
             'release_year': request.form['release_year'],
-            'manufacturer_id': request.form['manufacturer_id']
-        }
-        char_data = {
             'cores': request.form['cores'],
             'threads': request.form['threads'],
             'base_clock': request.form['base_clock'],
             'max_clock': request.form['max_clock'],
             'tdp': request.form['tdp']
         }
-        errors = validate_data(processor_data, VALIDATION_RULES['processors']) + validate_data(char_data, VALIDATION_RULES['characteristics'])
+        errors = validate_data(processor_data, VALIDATION_RULES['processors'])
         if not errors:
             with get_db_connection() as conn:
                 cursor = conn.cursor()
-                cursor.execute("SELECT characteristics_id FROM processors WHERE id = ?", (id,))
-                char_id = cursor.fetchone()['characteristics_id']
-                cursor.execute("""
-                    UPDATE characteristics 
-                    SET cores = ?, threads = ?, base_clock = ?, max_clock = ?, tdp = ?
-                    WHERE id = ?
-                """, (char_data['cores'], char_data['threads'], char_data['base_clock'], char_data['max_clock'], char_data['tdp'], char_id))
                 cursor.execute("""
                     UPDATE processors 
-                    SET model_name = ?, release_year = ?, manufacturer_id = ?, config_id = ?, performance_tests_id = ?
+                    SET model_name = ?, release_year = ?, manufacturer_id = ?, cores = ?, threads = ?, base_clock = ?, max_clock = ?, tdp = ?, config_id = ?, performance_tests_id = ?
                     WHERE id = ?
-                """, (processor_data['model_name'], processor_data['release_year'], processor_data['manufacturer_id'], 
+                """, (processor_data['model_name'], processor_data['release_year'], request.form['manufacturer_id'], 
+                      processor_data['cores'], processor_data['threads'], processor_data['base_clock'], processor_data['max_clock'], processor_data['tdp'], 
                       request.form['config_id'] or None, request.form['performance_tests_id'] or None, id))
                 conn.commit()
             return redirect(url_for('view'))
     
     with get_db_connection() as conn:
         processor = conn.execute("""
-            SELECT p.*, m.company_name, c.cores, c.threads, c.base_clock, c.max_clock, c.tdp
+            SELECT p.*, m.company_name
             FROM processors p 
             JOIN manufacturers m ON p.manufacturer_id = m.id 
-            JOIN characteristics c ON p.characteristics_id = c.id
             WHERE p.id = ?
         """, (id,)).fetchone()
         manufacturers = conn.execute("SELECT id, company_name FROM manufacturers").fetchall()
@@ -338,57 +329,6 @@ def edit_manufacturer(id):
     with get_db_connection() as conn:
         manufacturer = conn.execute("SELECT id, company_name, country, founded_year, employees FROM manufacturers WHERE id = ?", (id,)).fetchone()
     return render_template('edit_manufacturer.html', manufacturer=manufacturer, errors=errors)
-
-# Характеристики
-@app.route('/characteristics', methods=['GET', 'POST'])
-def characteristics():
-    errors = []
-    if request.method == 'POST':
-        data = {
-            'cores': request.form['cores'],
-            'threads': request.form['threads'],
-            'base_clock': request.form['base_clock'],
-            'max_clock': request.form['max_clock'],
-            'tdp': request.form['tdp']
-        }
-        errors = validate_data(data, VALIDATION_RULES['characteristics'])
-        if not errors:
-            with get_db_connection() as conn:
-                cursor = conn.cursor()
-                cursor.execute("""
-                    INSERT INTO characteristics (cores, threads, base_clock, max_clock, tdp)
-                    VALUES (?, ?, ?, ?, ?)
-                """, (data['cores'], data['threads'], data['base_clock'], data['max_clock'], data['tdp']))
-                conn.commit()
-    with get_db_connection() as conn:
-        characteristics = conn.execute("SELECT id, cores, threads, base_clock, max_clock, tdp FROM characteristics ORDER BY id").fetchall()
-    return render_template('characteristics.html', characteristics=characteristics, errors=errors)
-
-@app.route('/edit_characteristics/<int:id>', methods=['GET', 'POST'])
-def edit_characteristics(id):
-    errors = []
-    if request.method == 'POST':
-        data = {
-            'cores': request.form['cores'],
-            'threads': request.form['threads'],
-            'base_clock': request.form['base_clock'],
-            'max_clock': request.form['max_clock'],
-            'tdp': request.form['tdp']
-        }
-        errors = validate_data(data, VALIDATION_RULES['characteristics'])
-        if not errors:
-            with get_db_connection() as conn:
-                cursor = conn.cursor()
-                cursor.execute("""
-                    UPDATE characteristics 
-                    SET cores = ?, threads = ?, base_clock = ?, max_clock = ?, tdp = ?
-                    WHERE id = ?
-                """, (data['cores'], data['threads'], data['base_clock'], data['max_clock'], data['tdp'], id))
-                conn.commit()
-            return redirect(url_for('characteristics'))
-    with get_db_connection() as conn:
-        characteristic = conn.execute("SELECT id, cores, threads, base_clock, max_clock, tdp FROM characteristics WHERE id = ?", (id,)).fetchone()
-    return render_template('edit_characteristics.html', characteristic=characteristic, errors=errors)
 
 # Конфигурации
 @app.route('/config', methods=['GET', 'POST'])
@@ -548,11 +488,11 @@ def queries():
     attributes = {
         'model_name': {'table': 'p', 'column': 'model_name', 'type': 'text', 'label': 'Название модели'},
         'release_year': {'table': 'p', 'column': 'release_year', 'type': 'number', 'label': 'Год выпуска'},
-        'cores': {'table': 'c', 'column': 'cores', 'type': 'number', 'label': 'Количество ядер'},
-        'threads': {'table': 'c', 'column': 'threads', 'type': 'number', 'label': 'Количество потоков'},
-        'base_clock': {'table': 'c', 'column': 'base_clock', 'type': 'float', 'label': 'Базовая частота (GHz)'},
-        'max_clock': {'table': 'c', 'column': 'max_clock', 'type': 'float', 'label': 'Макс. частота (GHz)'},
-        'tdp': {'table': 'c', 'column': 'tdp', 'type': 'number', 'label': 'Тепловыделение (Вт)'},
+        'cores': {'table': 'p', 'column': 'cores', 'type': 'number', 'label': 'Количество ядер'},
+        'threads': {'table': 'p', 'column': 'threads', 'type': 'number', 'label': 'Количество потоков'},
+        'base_clock': {'table': 'p', 'column': 'base_clock', 'type': 'float', 'label': 'Базовая частота (GHz)'},
+        'max_clock': {'table': 'p', 'column': 'max_clock', 'type': 'float', 'label': 'Макс. частота (GHz)'},
+        'tdp': {'table': 'p', 'column': 'tdp', 'type': 'number', 'label': 'Тепловыделение (Вт)'},
         'company_name': {'table': 'm', 'column': 'company_name', 'type': 'text', 'label': 'Производитель'},
         'country': {'table': 'm', 'column': 'country', 'type': 'text', 'label': 'Страна'},
         'founded_year': {'table': 'm', 'column': 'founded_year', 'type': 'number', 'label': 'Год основания'},
@@ -627,7 +567,7 @@ def queries():
                     cursor = conn.cursor()
                     query = """
                         SELECT p.id, p.model_name, p.release_year, m.company_name, 
-                               c.cores, c.threads, c.base_clock, c.max_clock, c.tdp,
+                               p.cores, p.threads, p.base_clock, p.max_clock, p.tdp,
                                m.country, m.founded_year, m.employees,
                                conf.motherboard_model, conf.ram_type, conf.ram_size, conf.socket_type,
                                pt.single_core_score, pt.multi_core_score, pt.power_consumption, 
@@ -635,7 +575,6 @@ def queries():
                                pt.ram_used, pt.storage_used, pt.gpu_used, pt.cooling_system
                         FROM processors p
                         JOIN manufacturers m ON p.manufacturer_id = m.id
-                        JOIN characteristics c ON p.characteristics_id = c.id
                         LEFT JOIN config conf ON p.config_id = conf.id
                         LEFT JOIN performance_tests pt ON p.performance_tests_id = pt.id
                         WHERE {table1}.{column1} >= ? AND {table1}.{column1} <= ?
@@ -684,16 +623,14 @@ def add_detailed():
     if request.method == 'POST':
         processor_data = {
             'model_name': request.form.get('model_name', '').strip(),
-            'release_year': request.form.get('release_year', '').strip()
-        }
-        company_name = request.form.get('company_name')
-        char_data = {
+            'release_year': request.form.get('release_year', '').strip(),
             'cores': request.form.get('cores', ''),
             'threads': request.form.get('threads', ''),
             'base_clock': request.form.get('base_clock', ''),
             'max_clock': request.form.get('max_clock', ''),
             'tdp': request.form.get('tdp', '')
         }
+        company_name = request.form.get('company_name')
         config_data = {
             'motherboard_model': request.form.get('motherboard_model', ''),
             'ram_type': request.form.get('ram_type', ''),
@@ -719,18 +656,17 @@ def add_detailed():
             errors.append("Выберите существующего производителя из списка")
         else:
             errors.extend(validate_data(processor_data, VALIDATION_RULES['processors']))
-            errors.extend(validate_data(char_data, VALIDATION_RULES['characteristics']))
             errors.extend(validate_data(config_data, VALIDATION_RULES['config']))
             errors.extend(validate_data(perf_data, VALIDATION_RULES['performance_tests']))
 
             if not errors:
                 try:
                     release_year = int(processor_data['release_year']) if processor_data['release_year'] else None
-                    cores = int(char_data['cores']) if char_data['cores'] else None
-                    threads = int(char_data['threads']) if char_data['threads'] else None
-                    base_clock = float(char_data['base_clock']) if char_data['base_clock'] else None
-                    max_clock = float(char_data['max_clock']) if char_data['max_clock'] else None
-                    tdp = int(char_data['tdp']) if char_data['tdp'] else None
+                    cores = int(processor_data['cores']) if processor_data['cores'] else None
+                    threads = int(processor_data['threads']) if processor_data['threads'] else None
+                    base_clock = float(processor_data['base_clock']) if processor_data['base_clock'] else None
+                    max_clock = float(processor_data['max_clock']) if processor_data['max_clock'] else None
+                    tdp = int(processor_data['tdp']) if processor_data['tdp'] else None
                     ram_size = int(config_data['ram_size']) if config_data['ram_size'] else None
                     single_core_score = int(perf_data['single_core_score']) if perf_data['single_core_score'] else None
                     multi_core_score = int(perf_data['multi_core_score']) if perf_data['multi_core_score'] else None
@@ -742,12 +678,6 @@ def add_detailed():
                         cursor = conn.cursor()
                         cursor.execute("SELECT id FROM manufacturers WHERE company_name = ?", (company_name,))
                         manufacturer_id = cursor.fetchone()['id']
-
-                        cursor.execute("""
-                            INSERT INTO characteristics (cores, threads, base_clock, max_clock, tdp)
-                            VALUES (?, ?, ?, ?, ?)
-                        """, (cores, threads, base_clock, max_clock, tdp))
-                        characteristics_id = cursor.lastrowid
 
                         cursor.execute("""
                             INSERT INTO config (motherboard_model, ram_type, ram_size, socket_type)
@@ -765,9 +695,9 @@ def add_detailed():
                         performance_tests_id = cursor.lastrowid
 
                         cursor.execute("""
-                            INSERT INTO processors (model_name, release_year, manufacturer_id, characteristics_id, config_id, performance_tests_id)
-                            VALUES (?, ?, ?, ?, ?, ?)
-                        """, (processor_data['model_name'], release_year, manufacturer_id, characteristics_id, config_id, performance_tests_id))
+                            INSERT INTO processors (model_name, release_year, manufacturer_id, cores, threads, base_clock, max_clock, tdp, config_id, performance_tests_id)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """, (processor_data['model_name'], release_year, manufacturer_id, cores, threads, base_clock, max_clock, tdp, config_id, performance_tests_id))
                         conn.commit()
                     return redirect(url_for('view'))
                 except ValueError:
