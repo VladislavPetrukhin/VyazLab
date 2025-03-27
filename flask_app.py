@@ -114,11 +114,17 @@ def search():
     company_name = None
     country = None
     motherboard_model = None
+    no_results = False
+
+    # Получаем уникальные списки производителей и стран
+    with get_db_connection() as conn:
+        manufacturers = [row['company_name'] for row in conn.execute("SELECT DISTINCT company_name FROM manufacturers ORDER BY company_name").fetchall()]
+        countries = [row['country'] for row in conn.execute("SELECT DISTINCT country FROM manufacturers ORDER BY country").fetchall()]
 
     if request.method == 'POST':
         model_name = request.form.get('model_name', '').strip()
-        company_name = request.form.get('company_name', '').strip()
-        country = request.form.get('country', '').strip()
+        company_name = request.form.get('company_name')
+        country = request.form.get('country')
         motherboard_model = request.form.get('motherboard_model', '').strip()
 
         with get_db_connection() as conn:
@@ -143,19 +149,23 @@ def search():
                 query += " AND p.model_name LIKE ?"
                 params.append(f"%{model_name}%")
             if company_name:
-                query += " AND m.company_name LIKE ?"
-                params.append(f"%{company_name}%")
+                query += " AND m.company_name = ?"
+                params.append(company_name)
             if country:
-                query += " AND m.country LIKE ?"
-                params.append(f"%{country}%")
+                query += " AND m.country = ?"
+                params.append(country)
             if motherboard_model:
                 query += " AND conf.motherboard_model LIKE ?"
                 params.append(f"%{motherboard_model}%")
 
             results = cursor.execute(query, params).fetchall()
+            if not results:
+                no_results = True
 
     return render_template('search.html', results=results, model_name=model_name, 
-                          company_name=company_name, country=country, motherboard_model=motherboard_model)
+                           company_name=company_name, country=country, 
+                           motherboard_model=motherboard_model, no_results=no_results,
+                           manufacturers=manufacturers, countries=countries)
 
 # Добавление процессора (простой режим)
 @app.route('/add', methods=['GET', 'POST'])

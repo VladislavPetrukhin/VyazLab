@@ -24,20 +24,30 @@
 
     <h2>Поиск процессоров</h2>
     <form method="POST">
-        <label for="model_name">Название модели:</label><br>
-        <input type="text" name="model_name" id="model_name" value="{{ model_name or '' }}"><br>
-        
-        <label for="company_name">Производитель:</label><br>
-        <input type="text" name="company_name" id="company_name" value="{{ company_name or '' }}"><br>
-        
-        <label for="country">Страна:</label><br>
-        <input type="text" name="country" id="country" value="{{ country or '' }}"><br>
-        
-        <label for="motherboard_model">Модель материнской платы:</label><br>
-        <input type="text" name="motherboard_model" id="motherboard_model" value="{{ motherboard_model or '' }}"><br>
-        
-        <button type="submit">Найти</button>
-    </form>
+    <label for="model_name">Название модели:</label><br>
+    <input type="text" name="model_name" id="model_name" value="{{ model_name or '' }}"><br>
+    
+    <label for="company_name">Производитель:</label><br>
+    <select name="company_name" id="company_name">
+        <option value="">-- Выберите производителя --</option>
+        {% for manufacturer in manufacturers %}
+            <option value="{{ manufacturer }}" {% if manufacturer == company_name %}selected{% endif %}>{{ manufacturer }}</option>
+        {% endfor %}
+    </select><br>
+    
+    <label for="country">Страна:</label><br>
+    <select name="country" id="country">
+        <option value="">-- Выберите страну --</option>
+        {% for country_option in countries %}
+            <option value="{{ country_option }}" {% if country_option == country %}selected{% endif %}>{{ country_option }}</option>
+        {% endfor %}
+    </select><br>
+    
+    <label for="motherboard_model">Модель материнской платы:</label><br>
+    <input type="text" name="motherboard_model" id="motherboard_model" value="{{ motherboard_model or '' }}"><br>
+    
+    <button type="submit">Найти</button>
+</form>
 
     {% if results %}
         <h2>Результаты поиска</h2>
@@ -65,6 +75,10 @@
             </tr>
             {% endfor %}
         </table>
+    {% endif %}
+
+    {% if no_results %}
+        <p>Ничего не найдено по вашему запросу.</p>
     {% endif %}
 </body>
 </html>
