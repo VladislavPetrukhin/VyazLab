@@ -67,6 +67,13 @@
                 <option value="{{ pt['id'] }}">Однопоток: {{ pt['single_core_score'] }}, Многопоток: {{ pt['multi_core_score'] }}</option>
             {% endfor %}
         </select><br>
+<label for="cooling_system_id">Система охлаждения:</label><br>
+<select name="cooling_system_id" id="cooling_system_id">
+    <option value="">-- Выберите систему охлаждения --</option>
+    {% for cs in cooling_systems %}
+        <option value="{{ cs['id'] }}">{{ cs['cooler_name'] }}</option>
+    {% endfor %}
+</select><br>
         <button type="submit">Добавить</button>
     </form>
 

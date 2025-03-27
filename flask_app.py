@@ -46,6 +46,11 @@ VALIDATION_RULES = {
         'storage_used': {'min_length': 3, 'max_length': 50},
         'gpu_used': {'min_length': 3, 'max_length': 50},
         'cooling_system': {'min_length': 3, 'max_length': 50}
+    },
+    'cooling_systems': {
+        'cooler_name': {'min_length': 3, 'max_length': 100},
+        'cooler_type': {'min_length': 3, 'max_length': 50},
+        'max_tdp': {'min': 50, 'max': 500}
     }
 }
 
@@ -163,6 +168,7 @@ def add():
         manufacturers = conn.execute("SELECT id, company_name FROM manufacturers ORDER BY company_name").fetchall()
         configs = conn.execute("SELECT id, motherboard_model FROM config ORDER BY id").fetchall()
         performance_tests = conn.execute("SELECT id, single_core_score, multi_core_score FROM performance_tests ORDER BY id").fetchall()
+        cooling_systems = conn.execute("SELECT id, cooler_name FROM cooling_systems ORDER BY cooler_name").fetchall()
 
     if request.method == 'POST':
         # Собираем данные для процессора
@@ -178,6 +184,7 @@ def add():
         manufacturer_id = request.form.get('manufacturer_id')
         config_id = request.form.get('config_id')
         performance_tests_id = request.form.get('performance_tests_id')
+        cooling_system_id = request.form.get('cooling_system_id')
 
         # Валидация обязательных полей
         if not all([processor_data['model_name'], processor_data['release_year'], manufacturer_id]):
@@ -198,13 +205,14 @@ def add():
                     tdp = int(processor_data['tdp']) if processor_data['tdp'] else None
                     config_id = int(config_id) if config_id else None
                     performance_tests_id = int(performance_tests_id) if performance_tests_id else None
+                    cooling_system_id = int(cooling_system_id) if cooling_system_id else None
 
                     with get_db_connection() as conn:
                         cursor = conn.cursor()
                         cursor.execute("""
-                            INSERT INTO processors (model_name, release_year, manufacturer_id, cores, threads, base_clock, max_clock, tdp, config_id, performance_tests_id)
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                        """, (processor_data['model_name'], release_year, manufacturer_id, cores, threads, base_clock, max_clock, tdp, config_id, performance_tests_id))
+                            INSERT INTO processors (model_name, release_year, manufacturer_id, cores, threads, base_clock, max_clock, tdp, config_id, performance_tests_id, cooling_system_id)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """, (processor_data['model_name'], release_year, manufacturer_id, cores, threads, base_clock, max_clock, tdp, config_id, performance_tests_id, cooling_system_id))
                         conn.commit()
                         
                         # Получаем обновлённый список процессоров с дополнительной информацией
@@ -213,11 +221,13 @@ def add():
                                    m.company_name AS manufacturer_name,
                                    p.cores, p.threads,
                                    conf.motherboard_model,
-                                   pt.single_core_score, pt.multi_core_score
+                                   pt.single_core_score, pt.multi_core_score,
+                                   cs.cooler_name
                             FROM processors p
                             LEFT JOIN manufacturers m ON p.manufacturer_id = m.id
                             LEFT JOIN config conf ON p.config_id = conf.id
                             LEFT JOIN performance_tests pt ON p.performance_tests_id = pt.id
+                            LEFT JOIN cooling_systems cs ON p.cooling_system_id = cs.id
                             ORDER BY p.id
                         """).fetchall()
                 except ValueError:
@@ -231,16 +241,18 @@ def add():
                        m.company_name AS manufacturer_name,
                        p.cores, p.threads,
                        conf.motherboard_model,
-                       pt.single_core_score, pt.multi_core_score
+                       pt.single_core_score, pt.multi_core_score,
+                       cs.cooler_name
                 FROM processors p
                 LEFT JOIN manufacturers m ON p.manufacturer_id = m.id
                 LEFT JOIN config conf ON p.config_id = conf.id
                 LEFT JOIN performance_tests pt ON p.performance_tests_id = pt.id
+                LEFT JOIN cooling_systems cs ON p.cooling_system_id = cs.id
                 ORDER BY p.id
             """).fetchall()
 
     return render_template('add.html', errors=errors, processors=processors, manufacturers=manufacturers, 
-                          configs=configs, performance_tests=performance_tests)
+                          configs=configs, performance_tests=performance_tests, cooling_systems=cooling_systems)
 
 # Редактирование процессора
 @app.route('/edit/<int:id>', methods=['GET', 'POST'])
@@ -658,6 +670,11 @@ def add_detailed():
             'gpu_used': request.form.get('gpu_used', ''),
             'cooling_system': request.form.get('cooling_system', '')
         }
+        cooling_data = {
+            'cooler_name': request.form.get('cooler_name', '').strip(),
+            'cooler_type': request.form.get('cooler_type', '').strip(),
+            'max_tdp': request.form.get('max_tdp', '').strip()
+        }
 
         if not all([processor_data['model_name'], processor_data['release_year'], company_name]):
             errors.append("Обязательные поля для процессора должны быть заполнены")
@@ -667,6 +684,8 @@ def add_detailed():
             errors.extend(validate_data(processor_data, VALIDATION_RULES['processors']))
             errors.extend(validate_data(config_data, VALIDATION_RULES['config']))
             errors.extend(validate_data(perf_data, VALIDATION_RULES['performance_tests']))
+            if any(cooling_data.values()):  # Валидация только если данные о системе охлаждения введены
+                errors.extend(validate_data(cooling_data, VALIDATION_RULES['cooling_systems']))
 
             if not errors:
                 try:
@@ -682,18 +701,21 @@ def add_detailed():
                     power_consumption = int(perf_data['power_consumption']) if perf_data['power_consumption'] else None
                     temperature = int(perf_data['temperature']) if perf_data['temperature'] else None
                     test_duration = float(perf_data['test_duration']) if perf_data['test_duration'] else None
+                    max_tdp_cooling = int(cooling_data['max_tdp']) if cooling_data['max_tdp'] else None
 
                     with get_db_connection() as conn:
                         cursor = conn.cursor()
                         cursor.execute("SELECT id FROM manufacturers WHERE company_name = ?", (company_name,))
                         manufacturer_id = cursor.fetchone()['id']
 
+                        # Сохранение конфигурации
                         cursor.execute("""
                             INSERT INTO config (motherboard_model, ram_type, ram_size, socket_type)
                             VALUES (?, ?, ?, ?)
                         """, (config_data['motherboard_model'], config_data['ram_type'], ram_size, config_data['socket_type']))
                         config_id = cursor.lastrowid
 
+                        # Сохранение тестов производительности
                         cursor.execute("""
                             INSERT INTO performance_tests (single_core_score, multi_core_score, power_consumption, temperature,
                                                            test_duration, test_stand_info, ram_used, storage_used, gpu_used, cooling_system)
@@ -703,10 +725,20 @@ def add_detailed():
                               perf_data['gpu_used'], perf_data['cooling_system']))
                         performance_tests_id = cursor.lastrowid
 
+                        # Сохранение системы охлаждения, если данные введены
+                        cooling_system_id = None
+                        if cooling_data['cooler_name'] and cooling_data['cooler_type'] and cooling_data['max_tdp']:
+                            cursor.execute("""
+                                INSERT INTO cooling_systems (cooler_name, cooler_type, max_tdp)
+                                VALUES (?, ?, ?)
+                            """, (cooling_data['cooler_name'], cooling_data['cooler_type'], max_tdp_cooling))
+                            cooling_system_id = cursor.lastrowid
+
+                        # Сохранение процессора с cooling_system_id
                         cursor.execute("""
-                            INSERT INTO processors (model_name, release_year, manufacturer_id, cores, threads, base_clock, max_clock, tdp, config_id, performance_tests_id)
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                        """, (processor_data['model_name'], release_year, manufacturer_id, cores, threads, base_clock, max_clock, tdp, config_id, performance_tests_id))
+                            INSERT INTO processors (model_name, release_year, manufacturer_id, cores, threads, base_clock, max_clock, tdp, config_id, performance_tests_id, cooling_system_id)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """, (processor_data['model_name'], release_year, manufacturer_id, cores, threads, base_clock, max_clock, tdp, config_id, performance_tests_id, cooling_system_id))
                         conn.commit()
                     return redirect(url_for('view'))
                 except ValueError:
