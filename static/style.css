@@ -58,3 +58,13 @@ h2 {
 h1{
     text-align: center;
 }
+/* Установка размера иконки */
+img {
+    width: 48px;
+    height: 48px;
+}
+
+/* Выравнивание текста и иконки */
+span {
+    vertical-align: middle;
+}

@@ -19,11 +19,24 @@
         <a href="/performance">Тесты</a> |
         <a href="/cooling_systems">Системы охлаждения</a> |
         <a href="/stats">Статистика</a> |
-	<a href="/queries">Запросы</a>
+        <a href="/queries">Запросы</a>
     </nav>
+    <br>
+    <a style="font-weight: bold;" href="{{ url_for('switch_db', db_number=1) }}">База данных 1</a> |
+    <a style="font-weight: bold;" href="{{ url_for('switch_db', db_number=2) }}">База данных 2</a>
+    <br>
+    {% if active_db_number == 1 %}
+        <span style="font-weight: bold;">Сейчас выбрана база данных SQLITE</span>
+        <img src="{{ url_for('static', filename='db1_icon.png') }}" alt="Иконка базы данных 1" style="vertical-align: middle; margin-left: 5px;">
+    {% elif active_db_number == 2 %}
+        <span style="font-weight: bold;">Сейчас выбрана база данных POSTGRESQL</span>
+        <img src="{{ url_for('static', filename='db2_icon.png') }}" alt="Иконка базы данных 2" style="vertical-align: middle; margin-left: 5px;">
+    {% else %}
+        <p>База данных не выбрана</p>
+    {% endif %}
+    
     <p>Добро пожаловать! Используйте меню для работы с базой данных.</p>
-<p>Данная база данных была создана для удобного хранения информации, а так же поиска в выбранной предметной области "Микропроцессоры".</p>
-
-<p>Работу выполнил студент группы ИВТ-Б22 Петрухин Владислав</p>
+    <p>Данная база данных была создана для удобного хранения информации, а также поиска в выбранной предметной области "Микропроцессоры".</p>
+    <p>Работу выполнил студент группы ИВТ-Б22 Петрухин Владислав</p>
 </body>
 </html>
