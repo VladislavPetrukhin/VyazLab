@@ -11,7 +11,7 @@
     <nav>
         <a href="/">Главная</a> |
         <a href="/search">Поиск</a> |
-        <a href="/view">Процессоры</a> |
+        <a href="/view">Просмотр</a> |
         <a href="/add">Добавить процессор</a> |
         <a href="/add_detailed">Добавить (подробно)</a> |
         <a href="/manufacturers">Производители</a> |
@@ -19,11 +19,12 @@
         <a href="/performance">Тесты</a> |
         <a href="/cooling_systems">Системы охлаждения</a> |
         <a href="/stats">Статистика</a> |
-        <a href="/queries">Запросы</a>
+        <a href="/queries">Запросы</a> |
+        <a href="/sync_queries">Запросы (синхр.)</a>
     </nav>
     <br>
-    <a style="font-weight: bold;" href="{{ url_for('switch_db', db_number=1) }}">База данных 1</a> |
-    <a style="font-weight: bold;" href="{{ url_for('switch_db', db_number=2) }}">База данных 2</a>
+    <a style="font-weight: bold;" href="{{ url_for('switch_db', db_number=1) }}">База данных SQLITE</a> |
+    <a style="font-weight: bold;" href="{{ url_for('switch_db', db_number=2) }}">База данных POSTGRESQL</a>
     <br>
     {% if active_db_number == 1 %}
         <span style="font-weight: bold;">Сейчас выбрана база данных SQLITE</span>
